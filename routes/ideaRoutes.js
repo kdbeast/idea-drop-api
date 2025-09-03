@@ -4,13 +4,21 @@ import mongoose from "mongoose";
 
 const router = express.Router();
 
-// @route GET /api/ideas
-// @description Get all ideas
-// @access Public
+// @route             GET /api/ideas
+// @description       Get all ideas
+// @access            Public
+// @query             _limit (optional limit for ideas returned)
 
 router.get("/", async (req, res, next) => {
   try {
-    const ideas = await Idea.find({});
+    const limit = parseInt(req.query._limit);
+    const query = Idea.find().sort({ createdAt: -1 });
+
+    if (!isNaN(limit) && limit > 0) {
+      query.limit(limit);
+    }
+
+    const ideas = await query.exec();
     res.json(ideas);
   } catch (error) {
     console.log(error);
@@ -18,9 +26,9 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// @route GET /api/ideas/:id
-// @description Get single idea
-// @access Public
+// @route             GET /api/ideas/:id
+// @description       Get single idea
+// @access            Public
 
 router.get("/:id", async (req, res, next) => {
   try {
@@ -43,9 +51,9 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
-// @route POST /api/ideas
-// @description Create new ideas
-// @access Public
+// @route             POST /api/ideas
+// @description       Create new ideas
+// @access            Public
 
 router.post("/", async (req, res, next) => {
   try {
@@ -79,9 +87,9 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-// @route DELETE /api/ideas/:id
-// @description Delete idea
-// @access Public
+// @route             DELETE /api/ideas/:id
+// @description       Delete idea
+// @access            Public
 
 router.delete("/:id", async (req, res, next) => {
   try {
@@ -104,9 +112,9 @@ router.delete("/:id", async (req, res, next) => {
   }
 });
 
-// @route PUT /api/ideas/:id
-// @description Update idea
-// @access Public
+// @route             PUT /api/ideas/:id
+// @description       Update idea
+// @access            Public
 
 router.put("/:id", async (req, res, next) => {
   try {
