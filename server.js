@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import ideaRoutes from "./routes/ideaRoutes.js";
+import ideaRouter from "./routes/ideaRoutes.js";
+import authRouter from "./routes/authRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import connectDB from "./config/db.js";
 
@@ -18,7 +19,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 //Routes
-app.use("/api/ideas", ideaRoutes);
+app.use("/api/ideas", ideaRouter);
+app.use("/api/auth", authRouter);
 
 // Error Fallback
 app.use((req, res, next) => {
