@@ -53,7 +53,7 @@ router.get("/:id", async (req, res, next) => {
 });
 
 // @route             POST /api/ideas
-// @description       Create new ideas
+// @description       Create new idea
 // @access            Public
 
 router.post("/", protect, async (req, res, next) => {
@@ -78,6 +78,7 @@ router.post("/", protect, async (req, res, next) => {
           : Array.isArray(tags)
           ? tags
           : [],
+      user: req.user.id,
     });
 
     const savedIdea = await newIdea.save();
@@ -101,11 +102,21 @@ router.delete("/:id", protect, async (req, res, next) => {
       throw new Error("Idea not found");
     }
 
-    const idea = await Idea.findByIdAndDelete(id);
+    const idea = await Idea.findById(id);
+
     if (!idea) {
       res.status(404);
       throw new Error("Idea not found");
     }
+
+    // Check if user owns idea
+    if (idea.user.toString() !== req.user.id) {
+      res.status(403);
+      throw new Error("Not authorized to delete this idea");
+    }
+
+    await idea.deleteOne();
+
     res.json({ message: "Idea deleted successfully" });
   } catch (e) {
     console.log(e);
@@ -126,6 +137,19 @@ router.put("/:id", protect, async (req, res, next) => {
       throw new Error("Idea not found");
     }
 
+    const idea = await Idea.findById(id);
+
+    if (!idea) {
+      res.status(404);
+      throw new Error("Idea not found");
+    }
+
+    // Check if user owns idea
+    if (idea.user.toString() !== req.user.id) {
+      res.status(403);
+      throw new Error("Not authorized to update this idea");
+    }
+
     const { title, description, summary, tags } = req.body || {};
 
     if (!title?.trim() || !description?.trim() || !summary?.trim()) {
@@ -133,23 +157,21 @@ router.put("/:id", protect, async (req, res, next) => {
       throw new Error("Please fill in all required fields");
     }
 
-    const updatedIdea = await Idea.findByIdAndUpdate(
-      id,
-      {
-        title,
-        description,
-        summary,
-        tags: Array.isArray(tags)
-          ? tags
-          : tags.split(",").map((tag) => tag.trim()),
-      },
-      { new: true, runValidators: true }
-    );
+    idea.title = title;
+    idea.description = description;
+    idea.summary = summary;
+    idea.tags = Array.isArray(tags)
+      ? tags
+      : typeof tags === "string"
+      ? tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean)
+      : Array.isArray(tags)
+      ? tags
+      : [];
 
-    if (!updatedIdea) {
-      res.status(404);
-      throw new Error("Idea not found");
-    }
+    const updatedIdea = await idea.save();
 
     res.json(updatedIdea);
   } catch (e) {
